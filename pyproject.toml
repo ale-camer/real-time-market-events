@@ -22,6 +22,9 @@ classifiers = [
 
 # --- Core runtime dependencies (to be filled per issue) ---
 dependencies = [
+    "websockets>=12.0",
+    "pydantic>=2.7.0",
+    "pydantic-settings>=2.3.0",
     # M1 - Ingesta & Kafka
     # "websockets>=12.0",
     # "httpx>=0.27.0",
@@ -87,6 +90,7 @@ ignore_missing_imports = true
 # --- Pytest ---
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["."]
 asyncio_mode = "auto"
 addopts = "--cov=src --cov-report=term-missing --cov-fail-under=80"
 
@@ -97,3 +101,15 @@ omit = ["tests/*", "src/*/__init__.py"]
 
 [tool.coverage.report]
 show_missing = true
+
+# --- Hatch Build ---
+[tool.hatch.build.targets.wheel]
+packages = [
+    "src/api",
+    "src/consumers",
+    "src/extractors",
+    "src/loaders",
+    "src/producers",
+    "src/schemas",
+    "src/transformers"
+]
