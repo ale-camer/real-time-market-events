@@ -1,0 +1,108 @@
+# =============================================================================
+# Real-Time Market Events Stream — .gitignore
+# =============================================================================
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+*.pyd
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+wheels/
+*.whl
+.eggs/
+pip-wheel-metadata/
+share/python-wheels/
+MANIFEST
+.installed.cfg
+
+# --- Virtual environment ---
+.venv/
+venv/
+ENV/
+env/
+env.bak/
+venv.bak/
+
+# --- Environment variables ---
+.env
+.env.local
+.env.*.local
+secrets/
+
+# --- Testing ---
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+
+# --- Type checking ---
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pytype/
+.pyre/
+
+# --- Linting ---
+.ruff_cache/
+
+# --- IDE / Editors ---
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# --- Jupyter ---
+.ipynb_checkpoints/
+*.ipynb
+
+# --- Logs ---
+logs/
+*.log
+*.out
+
+# --- Docker ---
+.docker/
+
+# --- Airflow ---
+airflow.cfg
+airflow.db
+airflow-webserver.pid
+standalone_admin_password.txt
+logs/dag_processor_manager/
+logs/scheduler/
+
+# --- Kafka / Faust ---
+kafka-logs/
+*.offset
+
+# --- TimescaleDB / PostgreSQL ---
+*.dump
+*.sql.gz
+pgdata/
+
+# --- Terraform / Infra ---
+infra/.terraform/
+infra/*.tfstate
+infra/*.tfstate.backup
+infra/.terraform.lock.hcl
+
+# --- Misc ---
+*.tmp
+*.bak
+*.orig
+.cache/
