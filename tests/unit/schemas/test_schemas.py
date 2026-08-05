@@ -139,3 +139,22 @@ def test_avro_serialization_round_trip() -> None:
     # Re-instantiate Pydantic model from deserialized dict
     reconstructed_event = CryptoEvent(**deserialized_dict)
     assert reconstructed_event == original_event
+
+
+def test_invalid_timestamp_negative() -> None:
+    """Test that negative or zero timestamp raises a ValidationError."""
+    with pytest.raises(ValidationError):
+        CryptoEvent(
+            symbol="BTC",
+            price=100.0,
+            volume=1.0,
+            timestamp=-10.0,
+            source="coingecko",
+        )
+
+
+def test_deserialize_corrupt_bytes() -> None:
+    """Test exception handling when deserializing corrupt bytes."""
+    corrupt_bytes = b"not_valid_avro_data_just_random_string"
+    with pytest.raises(Exception):  # noqa: B017
+        deserialize_avro(corrupt_bytes)

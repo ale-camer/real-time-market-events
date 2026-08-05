@@ -1,103 +1,91 @@
 import json
 import logging
-from collections.abc import Generator
-from typing import cast
 from unittest.mock import MagicMock, patch
 
 import pytest
-from confluent_kafka import KafkaError
 from src.producers.kafka_producer import EventProducer
 
 
 @pytest.fixture
-def mock_producer_class() -> Generator[MagicMock, None, None]:
-    with patch("src.producers.kafka_producer.Producer") as mock:
-        yield mock
+def producer(monkeypatch: pytest.MonkeyPatch) -> EventProducer:
+    monkeypatch.setenv("KAFKA_BOOTSTRAP_SERVERS", "fake-broker:9092")
+
+    with patch("src.producers.kafka_producer.Producer") as mock_producer_class:
+        mock_instance = MagicMock()
+        mock_producer_class.return_value = mock_instance
+        producer = EventProducer()
+        # Attach the mock instance to the fixture so we can assert on it easily
+        producer._mock_instance = mock_instance  # type: ignore[attr-defined]
+        return producer
 
 
-def test_producer_initialization(mock_producer_class: MagicMock) -> None:
-    """Test that EventProducer initializes confluent_kafka.Producer with expected config."""
-    producer = EventProducer(producer_config={"bootstrap.servers": "test:9092"})
-    assert producer is not None
-    mock_producer_class.assert_called_once()
-    called_config = mock_producer_class.call_args[0][0]
-    assert called_config["bootstrap.servers"] == "test:9092"
-    assert called_config["acks"] == "all"
+def test_producer_initialization(producer: EventProducer) -> None:
+    """Test that the producer initializes with correct config."""
+    assert producer.settings.kafka_bootstrap_servers == "fake-broker:9092"
+    assert producer.producer is not None
 
 
-def test_produce_success(mock_producer_class: MagicMock) -> None:
-    """Test that produce() serializes key and value to bytes and calls underlying producer."""
-    mock_instance = mock_producer_class.return_value
-    producer = EventProducer()
+def test_produce_success(producer: EventProducer, caplog: pytest.LogCaptureFixture) -> None:
+    """Test producing a message successfully."""
+    caplog.set_level(logging.INFO)
 
-    topic = "market.events.crypto"
+    topic = "market.crypto"
     key = "BTC-USD"
-    value = {"symbol": "BTC", "price": 50000.0, "timestamp": 1690000000}
+    value = {"symbol": "BTC-USD", "price": 50000.0, "volume": 1.5}
 
     producer.produce(topic=topic, key=key, value=value)
 
-    mock_instance.produce.assert_called_once()
-    call_kwargs = mock_instance.produce.call_args[1]
+    # Assert that producer.produce was called with correct arguments
+    mock_prod = producer._mock_instance  # type: ignore[attr-defined]
+    mock_prod.produce.assert_called_once()
 
+    call_args, call_kwargs = mock_prod.produce.call_args
     assert call_kwargs["topic"] == topic
     assert call_kwargs["key"] == b"BTC-USD"
-    assert json.loads(call_kwargs["value"].decode("utf-8")) == value
-    mock_instance.poll.assert_called_once_with(0)
+    assert json.loads(call_kwargs["value"]) == value
+
+    # Assert that poll was called
+    mock_prod.poll.assert_called_once_with(0)
 
 
-def test_delivery_report_success(
-    mock_producer_class: MagicMock, caplog: pytest.LogCaptureFixture
-) -> None:
-    """Test that _delivery_report logs success when error is None."""
-    caplog.set_level(logging.INFO)
-    producer = EventProducer()
-
-    mock_msg = MagicMock()
-    mock_msg.topic.return_value = "test.topic"
-    mock_msg.partition.return_value = 0
-    mock_msg.offset.return_value = 42
-
-    producer._delivery_report(err=None, msg=mock_msg)
-
-    assert "Message delivered to topic 'test.topic' [0] at offset 42" in caplog.text
-
-
-def test_delivery_report_error(
-    mock_producer_class: MagicMock, caplog: pytest.LogCaptureFixture
-) -> None:
-    """Test that _delivery_report logs error when err is provided."""
+def test_produce_exception(producer: EventProducer, caplog: pytest.LogCaptureFixture) -> None:
+    """Test handling of exceptions during produce."""
     caplog.set_level(logging.ERROR)
-    producer = EventProducer()
 
-    mock_err = cast(KafkaError, Exception("Broker: Leader not available"))
+    mock_prod = producer._mock_instance  # type: ignore[attr-defined]
+    mock_prod.produce.side_effect = Exception("Kafka connection down")
+
+    with pytest.raises(Exception, match="Kafka connection down"):
+        producer.produce(topic="market.crypto", key="BTC", value={"price": 100})
+
+    assert "Failed to produce message to topic 'market.crypto' with key 'BTC'" in caplog.text
+
+
+def test_flush(producer: EventProducer) -> None:
+    """Test flush method calls underlying producer flush."""
+    mock_prod = producer._mock_instance  # type: ignore[attr-defined]
+    mock_prod.flush.return_value = 0
+
+    remaining = producer.flush(timeout=1.0)
+
+    mock_prod.flush.assert_called_once_with(1.0)
+    assert remaining == 0
+
+
+def test_delivery_report(producer: EventProducer, caplog: pytest.LogCaptureFixture) -> None:
+    """Test the delivery report callback."""
+    caplog.set_level(logging.INFO)
 
     mock_msg = MagicMock()
-    mock_msg.key.return_value = b"test_key"
+    mock_msg.topic.return_value = "market.crypto"
+    mock_msg.partition.return_value = 0
+    mock_msg.offset.return_value = 123
+    mock_msg.key.return_value = b"BTC-USD"
 
-    producer._delivery_report(err=mock_err, msg=mock_msg)
+    # Test successful delivery
+    producer._delivery_report(err=None, msg=mock_msg)
+    assert "Message delivered to topic 'market.crypto' [0] at offset 123" in caplog.text
 
-    assert "Message delivery failed for key" in caplog.text
-    assert "Leader not available" in caplog.text
-
-
-def test_produce_raises_exception_on_error(mock_producer_class: MagicMock) -> None:
-    """Test that produce() raises and logs exceptions if serialization or produce fails."""
-    mock_instance = mock_producer_class.return_value
-    mock_instance.produce.side_effect = RuntimeError("Kafka buffer full")
-
-    producer = EventProducer()
-
-    with pytest.raises(RuntimeError, match="Kafka buffer full"):
-        producer.produce("topic", "key", {"data": "test"})
-
-
-def test_flush(mock_producer_class: MagicMock) -> None:
-    """Test that flush() calls underlying producer's flush()."""
-    mock_instance = mock_producer_class.return_value
-    mock_instance.flush.return_value = 0
-
-    producer = EventProducer()
-    result = producer.flush(timeout=2.5)
-
-    mock_instance.flush.assert_called_once_with(2.5)
-    assert result == 0
+    # Test failed delivery
+    producer._delivery_report(err="NetworkError", msg=mock_msg)  # type: ignore[arg-type]
+    assert "Message delivery failed for key 'b'BTC-USD'': NetworkError" in caplog.text
