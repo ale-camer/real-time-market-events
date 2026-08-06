@@ -31,7 +31,7 @@ dependencies = [
     "pydantic-settings>=2.3.0",
 
     # M2 - Stream Processing
-    # "faust-streaming>=0.10.0",
+    "faust-streaming>=0.10.0",
 
     # M3 - Persistencia & API
     # "asyncpg>=0.29.0",
