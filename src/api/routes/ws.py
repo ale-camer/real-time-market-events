@@ -13,6 +13,7 @@ class ConnectionManager:
     Manages active WebSocket connections to allow broadcasting
     real-time Kafka events directly to connected frontend clients.
     """
+
     def __init__(self) -> None:
         # Maps a market symbol to a list of active websocket connections
         self.active_connections: dict[str, list[WebSocket]] = {}

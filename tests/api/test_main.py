@@ -1,5 +1,4 @@
 from fastapi.testclient import TestClient
-
 from src.api.main import app
 
 client = TestClient(app)
@@ -24,10 +23,10 @@ def test_routers_included() -> None:
     # The safest way to verify registered REST endpoints is via the OpenAPI JSON.
     response = client.get("/openapi.json")
     assert response.status_code == 200
-    
+
     schema = response.json()
     paths = schema.get("paths", {})
-    
+
     # Assert REST endpoints are documented and available
     assert "/api/v1/ranking/volume" in paths
     assert "/api/v1/ohlcv/{symbol}" in paths

@@ -3,7 +3,6 @@ from typing import Any
 
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
-
 from src.db.repositories import get_ohlcv_history, get_top_volume_assets
 from src.db.session import get_db_session
 
@@ -16,7 +15,7 @@ async def api_get_ohlcv_history(
     start_time: datetime,
     end_time: datetime,
     interval: str = "1m",
-    session: AsyncSession = Depends(get_db_session),
+    session: AsyncSession = Depends(get_db_session),  # noqa: B008
 ) -> list[dict[str, Any]]:
     """
     Returns the OHLCV candlestick history for a given symbol within a specified timeframe.
@@ -30,7 +29,7 @@ async def api_get_top_volume_ranking(
     start_time: datetime,
     end_time: datetime,
     limit: int = 10,
-    session: AsyncSession = Depends(get_db_session),
+    session: AsyncSession = Depends(get_db_session),  # noqa: B008
 ) -> list[dict[str, Any]]:
     """
     Returns the top 'limit' assets sorted by total traded volume within a specific timeframe.
