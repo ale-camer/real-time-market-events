@@ -1,11 +1,9 @@
 from collections.abc import AsyncGenerator
 from datetime import datetime
-from typing import Any
 from unittest.mock import AsyncMock, patch
 
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
-
 from src.api.routes.rest import router
 from src.db.session import get_db_session
 
@@ -17,6 +15,7 @@ app.include_router(router)
 # Dependency Override for the async database session
 async def override_get_db_session() -> AsyncGenerator[AsyncMock, None]:
     yield AsyncMock()
+
 
 app.dependency_overrides[get_db_session] = override_get_db_session
 
@@ -46,7 +45,7 @@ def test_api_get_ohlcv_history(mock_get_history: AsyncMock) -> None:
             "interval": "1m",
         },
     )
-    
+
     assert response.status_code == 200
     data = response.json()
     assert len(data) == 1
@@ -57,9 +56,7 @@ def test_api_get_ohlcv_history(mock_get_history: AsyncMock) -> None:
 
 @patch("src.api.routes.rest.get_top_volume_assets")
 def test_api_get_top_volume_ranking(mock_get_top_volume: AsyncMock) -> None:
-    mock_get_top_volume.return_value = [
-        {"symbol": "BTC-USDT", "total_volume": 1000.5}
-    ]
+    mock_get_top_volume.return_value = [{"symbol": "BTC-USDT", "total_volume": 1000.5}]
 
     response = client.get(
         "/api/v1/ranking/volume",
@@ -69,7 +66,7 @@ def test_api_get_top_volume_ranking(mock_get_top_volume: AsyncMock) -> None:
             "limit": 5,
         },
     )
-    
+
     assert response.status_code == 200
     data = response.json()
     assert len(data) == 1
