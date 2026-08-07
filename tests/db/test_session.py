@@ -1,6 +1,5 @@
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
-
 from src.db.session import engine, get_db_session
 
 
@@ -21,12 +20,12 @@ async def test_get_db_session_yields_session() -> None:
     """
     # Instantiate the async generator
     generator = get_db_session()
-    
+
     # Fetch the first yielded value
     session = await anext(generator)
-    
+
     # Verify the type
     assert isinstance(session, AsyncSession)
-    
+
     # Close the generator cleanly to avoid ResourceWarnings
     await generator.aclose()
