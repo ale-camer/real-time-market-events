@@ -92,3 +92,7 @@ async def process_forex_events(stream: faust.StreamT[ForexEvent]) -> None:
         except Exception as e:
             logger.error(f"Error processing forex event, routing to DLQ: {e}")
             await send_to_dlq(event.model_dump(), e, "market.forex")
+
+
+# Import anomaly_agent so that Faust discovers the new anomaly detection agents
+import src.consumers.anomaly_agent  # noqa: F401, E402

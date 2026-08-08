@@ -30,6 +30,12 @@ services:
       - zookeeper
     volumes:
       - kafka_data:/bitnami/kafka
+    healthcheck:
+      test: kafka-broker-api-versions --bootstrap-server localhost:9092
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
 
   timescaledb:
     image: timescale/timescaledb:latest-pg14
@@ -65,8 +71,10 @@ services:
       - KAFKA_BROKER_URL=kafka:9092
       - DATABASE_URL=postgresql+asyncpg://postgres:postgres@timescaledb:5432/market_events
     depends_on:
-      - kafka
-      - timescaledb
+      kafka:
+        condition: service_healthy
+      timescaledb:
+        condition: service_started
 
   faust-worker:
     <<: *python-app
@@ -74,17 +82,22 @@ services:
     environment:
       - KAFKA_BROKER_URL=kafka:9092
       - DATABASE_URL=postgresql+asyncpg://postgres:postgres@timescaledb:5432/market_events
+    restart: on-failure
     depends_on:
-      - kafka
-      - timescaledb
+      kafka:
+        condition: service_healthy
+      timescaledb:
+        condition: service_started
 
   producer:
     <<: *python-app
     command: python -m src.producers.kafka_producer
     environment:
       - KAFKA_BROKER_URL=kafka:9092
+    restart: on-failure
     depends_on:
-      - kafka
+      kafka:
+        condition: service_healthy
 
 volumes:
   zookeeper_data:
