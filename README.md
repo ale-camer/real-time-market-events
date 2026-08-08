@@ -1,6 +1,6 @@
 # Real-Time Market Events Stream 🚀
 
-> **Estado:** 🏗️ En construcción — Día 0 / Scaffolding
+> **Estado:** 🚀 Finalizado — Proyecto Portfolio (Versión 1.0)
 
 Pipeline de streaming en tiempo real para captura, transformación y persistencia de eventos de mercado financiero (crypto, forex, acciones) usando Kafka, Faust y TimescaleDB.
 
@@ -110,27 +110,26 @@ real-time-market-events/
 | CI/CD | GitHub Actions |
 | Infra local | Docker Compose |
 
-## 🚀 Quick Start (próximamente)
+## 🚀 Quick Start
 
 ```bash
 # 1. Clonar el repo
 git clone https://github.com/alejandrocamerlengo/real-time-market-events.git
 cd real-time-market-events
 
-# 2. Crear entorno virtual
-python3 -m venv .venv && source .venv/bin/activate
+# 2. Configurar variables de entorno
+cp .env.example .env 
+# (Opcional) Editar .env para agregar API keys de CoinGecko o Polygon si se desean datos reales.
 
-# 3. Instalar dependencias de desarrollo
-pip install -e ".[dev]"
+# 3. Levantar toda la infraestructura (Kafka, DB, Grafana, API, Worker, Producer)
+docker compose up -d --build
 
-# 4. Configurar variables de entorno
-cp .env.example .env && nano .env
+# 4. Ejecutar migraciones de base de datos
+docker compose exec api alembic upgrade head
 
-# 5. Levantar infraestructura local
-docker compose up -d
-
-# 6. Ejecutar el pipeline
-# (documentado por milestone)
+# 5. Acceder a los servicios:
+# - FastAPI (Swagger UI): http://localhost:8000/docs
+# - Grafana: http://localhost:3000 (user: admin, pass: admin)
 ```
 
 ## 📋 Issues Abiertos

@@ -32,6 +32,7 @@ dependencies = [
 
     # M2 - Stream Processing
     "faust-streaming>=0.10.0",
+    "opentracing>=2.4.0",
 
     # M3 - Persistencia & API
     "asyncpg>=0.29.0",

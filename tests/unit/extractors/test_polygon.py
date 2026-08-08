@@ -10,6 +10,7 @@ from websockets.exceptions import ConnectionClosedError
 
 @pytest.fixture
 def extractor(monkeypatch: pytest.MonkeyPatch) -> PolygonExtractor:
+    logging.getLogger("src.extractors.polygon").disabled = False
     # Use a small reconnect delay for tests to run fast
     # Also set a fake API key so it attempts auth
     monkeypatch.setenv("POLYGON_API_KEY", "fake_test_key")
@@ -24,7 +25,7 @@ async def test_successful_auth_sub_and_message(
     extractor: PolygonExtractor, caplog: pytest.LogCaptureFixture
 ) -> None:
     """Test full flow: auth -> subscribe -> message parse -> log."""
-    caplog.set_level(logging.INFO)
+    caplog.set_level(logging.INFO, logger="src.extractors.polygon")
 
     mock_ws = AsyncMock()
 
@@ -82,7 +83,7 @@ async def test_auth_failure_no_api_key(
     monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
 ) -> None:
     """Test that it aborts connection loop if no API key is set."""
-    caplog.set_level(logging.ERROR)
+    caplog.set_level(logging.ERROR, logger="src.extractors.polygon")
     monkeypatch.delenv("POLYGON_API_KEY", raising=False)
 
     # We don't use the fixture because we changed the env var
@@ -108,7 +109,7 @@ async def test_reconnect_on_connection_closed(
     extractor: PolygonExtractor, caplog: pytest.LogCaptureFixture
 ) -> None:
     """Test exponential backoff on ConnectionClosedError."""
-    caplog.set_level(logging.WARNING)
+    caplog.set_level(logging.WARNING, logger="src.extractors.polygon")
 
     error_mock = AsyncMock(side_effect=ConnectionClosedError(None, None))
 
