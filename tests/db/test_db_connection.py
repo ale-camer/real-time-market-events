@@ -24,12 +24,18 @@ async def test_database_tables_exist(db_session: AsyncSession) -> None:
     """
     # Check if market_events exists
     result_events = await db_session.execute(
-        text("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'market_events')")
+        text(
+            "SELECT EXISTS (SELECT FROM information_schema.tables "
+            "WHERE table_name = 'market_events')"
+        )
     )
     assert result_events.scalar() is True
 
     # Check if ohlcv_candles exists
     result_ohlcv = await db_session.execute(
-        text("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'ohlcv_candles')")
+        text(
+            "SELECT EXISTS (SELECT FROM information_schema.tables "
+            "WHERE table_name = 'ohlcv_candles')"
+        )
     )
     assert result_ohlcv.scalar() is True

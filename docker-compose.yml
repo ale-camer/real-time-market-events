@@ -42,6 +42,20 @@ services:
     volumes:
       - timescaledb_data:/var/lib/postgresql/data
 
+  grafana:
+    image: grafana/grafana-oss:10.4.0
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-simple-json-datasource
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./infra/grafana/provisioning:/etc/grafana/provisioning:ro,z
+      - ./infra/grafana/dashboards:/var/lib/grafana/dashboards:ro,z
+    depends_on:
+      - timescaledb
+
   api:
     <<: *python-app
     command: uvicorn src.api.main:app --host 0.0.0.0 --port 8000
@@ -76,3 +90,4 @@ volumes:
   zookeeper_data:
   kafka_data:
   timescaledb_data:
+  grafana_data:
