@@ -10,6 +10,7 @@ from websockets.exceptions import ConnectionClosedError
 
 @pytest.fixture
 def extractor() -> CoinGeckoExtractor:
+    logging.getLogger("src.extractors.coingecko").disabled = False
     # Use a small reconnect delay for tests to run fast
     ext = CoinGeckoExtractor(pairs=["bitcoin"])
     ext.reconnect_delay = 0.01
@@ -22,7 +23,7 @@ async def test_successful_connection_and_message(
     extractor: CoinGeckoExtractor, caplog: pytest.LogCaptureFixture
 ) -> None:
     """Test that a valid ticker message is correctly parsed and logged."""
-    caplog.set_level(logging.INFO)
+    caplog.set_level(logging.INFO, logger="src.extractors.coingecko")
 
     valid_message = json.dumps(
         {
@@ -79,7 +80,7 @@ async def test_unexpected_format_does_not_crash(
     extractor: CoinGeckoExtractor, caplog: pytest.LogCaptureFixture
 ) -> None:
     """Test that a malformed JSON message is handled gracefully."""
-    caplog.set_level(logging.WARNING)
+    caplog.set_level(logging.WARNING, logger="src.extractors.coingecko")
 
     mock_ws = AsyncMock()
 
@@ -110,7 +111,7 @@ async def test_reconnect_on_connection_closed(
     extractor: CoinGeckoExtractor, caplog: pytest.LogCaptureFixture
 ) -> None:
     """Test exponential backoff on ConnectionClosed."""
-    caplog.set_level(logging.WARNING)
+    caplog.set_level(logging.WARNING, logger="src.extractors.coingecko")
 
     # This will cause _connect_and_read to raise ConnectionClosedError immediately
     error_mock = AsyncMock(side_effect=ConnectionClosedError(None, None))

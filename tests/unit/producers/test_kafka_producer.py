@@ -8,6 +8,7 @@ from src.producers.kafka_producer import EventProducer
 
 @pytest.fixture
 def producer(monkeypatch: pytest.MonkeyPatch) -> EventProducer:
+    logging.getLogger("src.producers.kafka_producer").disabled = False
     monkeypatch.setenv("KAFKA_BOOTSTRAP_SERVERS", "fake-broker:9092")
 
     with patch("src.producers.kafka_producer.Producer") as mock_producer_class:
@@ -27,7 +28,7 @@ def test_producer_initialization(producer: EventProducer) -> None:
 
 def test_produce_success(producer: EventProducer, caplog: pytest.LogCaptureFixture) -> None:
     """Test producing a message successfully."""
-    caplog.set_level(logging.INFO)
+    caplog.set_level(logging.INFO, logger="src.producers.kafka_producer")
 
     topic = "market.crypto"
     key = "BTC-USD"
@@ -50,7 +51,7 @@ def test_produce_success(producer: EventProducer, caplog: pytest.LogCaptureFixtu
 
 def test_produce_exception(producer: EventProducer, caplog: pytest.LogCaptureFixture) -> None:
     """Test handling of exceptions during produce."""
-    caplog.set_level(logging.ERROR)
+    caplog.set_level(logging.ERROR, logger="src.producers.kafka_producer")
 
     mock_prod = producer._mock_instance  # type: ignore[attr-defined]
     mock_prod.produce.side_effect = Exception("Kafka connection down")
@@ -74,7 +75,7 @@ def test_flush(producer: EventProducer) -> None:
 
 def test_delivery_report(producer: EventProducer, caplog: pytest.LogCaptureFixture) -> None:
     """Test the delivery report callback."""
-    caplog.set_level(logging.INFO)
+    caplog.set_level(logging.INFO, logger="src.producers.kafka_producer")
 
     mock_msg = MagicMock()
     mock_msg.topic.return_value = "market.crypto"
