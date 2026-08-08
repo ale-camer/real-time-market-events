@@ -15,4 +15,5 @@ app = faust.App(
     "market-events-processor",
     broker=KAFKA_BROKER_URL,
     value_serializer="json",  # Default serializer for the app
+    tracing_enabled=False,
 )
